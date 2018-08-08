@@ -9,7 +9,7 @@ Parameters:
 
   TemplateBucket:
     Type: String
-    Default: cft-crossaccount-organizationaccessrole
+    Default: cft-crossaccount-organizationaccessrolev2
     Description: The template bucket for the CloudFormation templates
 
   EnvironmentName:
@@ -138,7 +138,7 @@ Resources:
   IAMStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/OrganizationAccountAccessRole1.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customernameaccountaccessrole.yml
       Parameters:
         OtherAccountNumber: !Ref OtherAccountNumber
         
