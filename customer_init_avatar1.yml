@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description:  Ec2 instance created on the privatesubnet 
+Description:  EC2 instance created on the privatesubnet 
 Parameters:
   EC2KeyPairName:
     Description: EC2 key pair name for SSH access

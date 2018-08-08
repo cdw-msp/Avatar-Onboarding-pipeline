@@ -2,13 +2,14 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 
-Description: Master Teamplate that creates VPC and ec2 instance
+Description: Master Teamplate that creates cross account role(IAM), VPC and EC2 instances
 
 
 Parameters:
 
   TemplateBucket:
     Type: String
+    Default: cft-crossaccount-organizationaccessrole
     Description: The template bucket for the CloudFormation templates
 
   EnvironmentName:
@@ -19,6 +20,14 @@ Parameters:
       - dev
       - prod
     ConstraintDescription: Specify either dev or prod
+    
+   # OrganizationAccountAccessRole - IAM parameters 
+  OtherAccountNumber:
+    AllowedPattern: '[0-9]+'
+    Description: The 12 digit AWS account number to grant access to.
+    MaxLength: '12'
+    MinLength: '12'
+    Type: String
     
 
   # vpc.cfn.yml parameters
@@ -53,16 +62,7 @@ Parameters:
     Description: Number of days you would like your CloudWatch Logs to be retained
     Type: Number
     Default: 90
-
-  InstanceWebAmi:
-    Description: "AMI ID for web servers"
-    Type: "String"
-    Default: "ami-e0ba5c83"
-    AllowedPattern: "^ami-[0-9a-fA-F]{8,8}"
-    
   
-    
-    
 
   InstanceType:
     Description: The instance type for Elastic Beanstalk
@@ -107,7 +107,6 @@ Metadata:
           - KeyName
           - LogRetentionInDays
           - InstanceType
-          - InstanceWebAmi
           - SSHFrom
 
     ParameterLabels:
@@ -134,33 +133,43 @@ Conditions:
 
 Resources:
 
+# nested stacks should be pulled out from git branch
+
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/OrganizationAccountAccessRole1.yml
+      Parameters:
+        OtherAccountNumber: !Ref OtherAccountNumber
+        
+  
+
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_vpc.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_vpc1.yml
       Parameters:
         AvailabilityZone1: !Ref AvailabilityZone1
         SSHFrom: !Ref SSHFrom
         SingleNatGateway: !If [ IsProd, false, true ]
+        
   
   EC2Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_avatar.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_avatar1.yml
       Parameters:
         NetworkStackName: !GetAtt VpcStack.Outputs.Name
         EC2KeyPairName: !Ref KeyName
-        InstanceWebAmi: !Ref InstanceWebAmi
         InstanceWebType: !Ref InstanceType
 
   EC2Stack2:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_bastion.yml
+      TemplateURL: !Sub https://s3.amazonaws.com/${TemplateBucket}/customer_init_bastion1.yml
       Parameters:
         NetworkStackName: !GetAtt VpcStack.Outputs.Name
         EC2KeyPairName: !Ref KeyName
-        InstanceWebAmi: !Ref InstanceWebAmi
         InstanceWebType: !Ref InstanceType        
 
 Outputs:
